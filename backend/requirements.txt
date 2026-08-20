@@ -1,0 +1,25 @@
+# API
+fastapi
+uvicorn[standard]
+python-multipart
+
+# Configuration
+python-dotenv
+
+# Data validation
+pydantic
+
+# LLM
+groq
+
+# Resume/PDF processing
+PyMuPDF
+
+# Data / ML
+pandas
+numpy
+scikit-learn
+
+# NLP / Embeddings
+sentence-transformers
+torch
