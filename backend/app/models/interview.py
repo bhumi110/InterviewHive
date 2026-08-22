@@ -35,3 +35,13 @@ class FinalInterviewReport(BaseModel):
     )
 
     summary: str
+    
+    
+class GeneratedQuestion(BaseModel):
+    question: str
+    topic: str
+    difficulty: str
+    question_type: str
+    expected_concepts: list[str] = Field(
+        default_factory=list
+    )
