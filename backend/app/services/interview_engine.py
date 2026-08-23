@@ -1,3 +1,8 @@
+from app.services.interview_logic import (
+    should_end_interview,
+    generate_unique_question
+)
+
 from app.agents.manager import manager_decision
 from app.agents.interviewer import interviewer_agent
 from app.agents.evaluator import evaluate_answer
@@ -12,22 +17,19 @@ def run_interview_turn(
 ):
 
     evaluation = None
-    signal = None
     skeptic_result = None
 
-    # 1. EVALUATE PREVIOUS ANSWER
+    #EVALUATE PREVIOUS ANSWER
 
     if candidate_answer is not None:
 
         current_question = state.current_question
 
         evaluation = evaluate_answer(
-            question=current_question,
-            candidate_answer=candidate_answer,
-            target_role=blueprint["target_role"]
+            current_question,
+            candidate_answer
         )
 
-        # Store candidate answer
         state.conversation_history.append({
             "role": "candidate",
             "content": candidate_answer
@@ -37,23 +39,12 @@ def run_interview_turn(
             candidate_answer
         )
 
-        # Convert evaluation into manager signal
-        signal = {
-            "overall_score": evaluation.overall_score,
-            "technical_accuracy": evaluation.technical_accuracy,
-            "depth": evaluation.depth,
-            "reasoning": evaluation.reasoning,
-            "should_challenge": evaluation.should_challenge,
-            "state": determine_evaluation_state(
-                evaluation
-            )
-        }
-
+        # Store evaluation
         state.evaluations.append(
-            signal
+            evaluation.model_dump()
         )
 
-    # 2. SKEPTIC
+    # SKEPTIC
 
     if candidate_answer is not None:
 
@@ -63,12 +54,16 @@ def run_interview_turn(
             candidate_profile=candidate_profile
         )
 
-    # 3. MANAGER DECIDES WHAT HAPPENS NEXT
+    # MANAGER
 
     decision = manager_decision(
         state=state,
         blueprint=blueprint,
-        evaluation=signal,
+        evaluation=(
+            evaluation.model_dump()
+            if evaluation
+            else None
+        ),
         skeptic_result=(
             skeptic_result.model_dump()
             if skeptic_result
@@ -76,7 +71,7 @@ def run_interview_turn(
         )
     )
 
-    # 4. TERMINATE
+    #TERMINATE?
 
     if decision["action"] == "finish":
 
@@ -86,7 +81,6 @@ def run_interview_turn(
             "status": "completed",
             "decision": decision,
             "question": None,
-            "interviewer_message": None,
             "evaluation": (
                 evaluation.model_dump()
                 if evaluation
@@ -99,7 +93,7 @@ def run_interview_turn(
             )
         }
 
-    # 5. SKEPTIC CHALLENGE
+    #SKEPTIC CHALLENGE
 
     if decision["action"] == "challenge":
 
@@ -121,11 +115,6 @@ def run_interview_turn(
 
         state.question_count += 1
 
-        state.conversation_history.append({
-            "role": "interviewer",
-            "content": challenge_question
-        })
-
         return {
             "status": "in_progress",
             "decision": decision,
@@ -143,7 +132,7 @@ def run_interview_turn(
             )
         }
 
-    # 6. GENERATE NEXT QUESTION
+    #GENERATE NEW QUESTION
 
     question = generate_unique_question(
         topic=decision["topic"],
@@ -152,7 +141,7 @@ def run_interview_turn(
         previous_questions=state.questions_asked
     )
 
-    # 7. INTERVIEWER AGENT
+    #INTERVIEWER
 
     interviewer_response = interviewer_agent(
         decision=decision,
@@ -162,7 +151,7 @@ def run_interview_turn(
         candidate_answer=candidate_answer
     )
 
-    # 8. UPDATE STATE
+    #UPDATE STATE
 
     state.current_question = (
         question.model_dump()
@@ -176,14 +165,14 @@ def run_interview_turn(
         question.difficulty
     )
 
-    state.questions_asked.append(
-        question.question
-    )
-
     state.conversation_history.append({
         "role": "interviewer",
         "content": interviewer_response.question
     })
+
+    state.questions_asked.append(
+        question.question
+    )
 
     if question.topic not in state.topics_covered:
 
@@ -193,18 +182,25 @@ def run_interview_turn(
 
     state.question_count += 1
 
-    # 9. RETURN TURN
+    #RETURN
 
     return {
         "status": "in_progress",
+
         "decision": decision,
+
         "question": question.model_dump(),
-        "interviewer_message": interviewer_response.question,
+
+        "interviewer_message": (
+            interviewer_response.question
+        ),
+
         "evaluation": (
             evaluation.model_dump()
             if evaluation
             else None
         ),
+
         "skeptic": (
             skeptic_result.model_dump()
             if skeptic_result
