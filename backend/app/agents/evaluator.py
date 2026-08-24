@@ -1,4 +1,5 @@
 import json
+import re
 
 from app.services.llm import generate_response
 from app.models.evaluation import AnswerEvaluation
@@ -8,6 +9,51 @@ from app.prompts import load_prompt
 EVALUATOR_PROMPT = load_prompt(
     "evaluator.txt"
 )
+
+
+def extract_json(text: str):
+    """
+    Extract the first JSON object from an LLM response.
+    Handles markdown fences such as ```json ... ```.
+    """
+
+    text = text.strip()
+
+    # Remove markdown code fences
+    text = re.sub(
+        r"^```json\s*",
+        "",
+        text,
+        flags=re.IGNORECASE
+    )
+
+    text = re.sub(
+        r"\s*```$",
+        "",
+        text
+    )
+
+    text = text.strip()
+
+    # Try normal JSON first
+    try:
+        return json.loads(text)
+    except json.JSONDecodeError:
+        pass
+
+    # Try extracting the outermost JSON object
+    start = text.find("{")
+    end = text.rfind("}")
+
+    if start == -1 or end == -1 or end <= start:
+        raise ValueError(
+            f"LLM did not return a JSON object.\n"
+            f"Response:\n{text}"
+        )
+
+    json_text = text[start:end + 1]
+
+    return json.loads(json_text)
 
 
 def evaluate_answer(
@@ -50,19 +96,18 @@ def evaluate_answer(
     }
 
     prompt = f"""
-Evaluate the candidate's interview answer using the provided
-question and expected concepts.
+Evaluate the candidate's interview answer.
 
-QUESTION CONTEXT
+QUESTION CONTEXT:
+
 {json.dumps(
     evaluation_input,
     indent=2,
     ensure_ascii=False
 )}
 
-Return ONLY valid JSON matching the expected evaluation structure.
+Evaluate:
 
-Expected fields:
 - overall_score
 - technical_accuracy
 - depth
@@ -75,6 +120,33 @@ Expected fields:
 - should_challenge
 - suggested_follow_up
 - missing_concepts
+
+IMPORTANT:
+
+Return ONLY one valid JSON object.
+
+Do not use markdown.
+Do not use ```json.
+Do not add explanations before or after the JSON.
+
+All string values must be properly escaped.
+
+Expected structure:
+
+{{
+    "overall_score": 0.0,
+    "technical_accuracy": 0.0,
+    "depth": 0.0,
+    "reasoning": 0.0,
+    "clarity": 0.0,
+    "communication": 0.0,
+    "confidence": 0.0,
+    "strengths": [],
+    "weaknesses": [],
+    "should_challenge": false,
+    "suggested_follow_up": "",
+    "missing_concepts": []
+}}
 """
 
     response_text = generate_response(
@@ -92,10 +164,32 @@ Expected fields:
         temperature=0
     )
 
-    result = json.loads(
-        response_text
-    )
+    print("\n===== EVALUATOR RAW RESPONSE =====")
+    print(response_text)
+    print("==================================\n")
 
-    return AnswerEvaluation.model_validate(
-        result
-    )
+    try:
+
+        result = extract_json(
+            response_text
+        )
+
+        return AnswerEvaluation.model_validate(
+            result
+        )
+
+    except Exception as e:
+
+        print(
+            "\nEvaluator JSON parsing failed:"
+        )
+
+        print(e)
+
+        print(
+            "\nRaw evaluator response:"
+        )
+
+        print(response_text)
+
+        raise

@@ -32,7 +32,10 @@ def should_follow_up(evaluation):
     if evaluation["should_challenge"]:
         return True
 
-    if evaluation["state"] in [
+    answer_state = determine_answer_state(evaluation)
+
+    if answer_state in [
+        "technical_gap",
         "shallow",
         "weak_reasoning"
     ]:

@@ -23,3 +23,5 @@ scikit-learn
 # NLP / Embeddings
 sentence-transformers
 torch
+
+python-multipart

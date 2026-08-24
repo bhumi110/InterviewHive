@@ -7,6 +7,7 @@ from app.agents.manager import manager_decision
 from app.agents.interviewer import interviewer_agent
 from app.agents.evaluator import evaluate_answer
 from app.agents.skeptic import skeptic_agent
+from app.agents.judge import judge_agent
 
 
 def run_interview_turn(
@@ -19,16 +20,17 @@ def run_interview_turn(
     evaluation = None
     skeptic_result = None
 
-    #EVALUATE PREVIOUS ANSWER
+    # EVALUATE PREVIOUS ANSWER
 
     if candidate_answer is not None:
 
         current_question = state.current_question
 
         evaluation = evaluate_answer(
-            current_question,
-            candidate_answer
-        )
+        current_question,
+        candidate_answer,
+        state.target_role
+    )
 
         state.conversation_history.append({
             "role": "candidate",
@@ -39,7 +41,6 @@ def run_interview_turn(
             candidate_answer
         )
 
-        # Store evaluation
         state.evaluations.append(
             evaluation.model_dump()
         )
@@ -207,3 +208,22 @@ def run_interview_turn(
             else None
         )
     }
+    
+def generate_final_report(
+        state,
+        candidate_profile,
+        target_role
+    ):
+
+        report = judge_agent(
+            candidate_profile=candidate_profile,
+            target_role=target_role,
+            questions=state.questions_asked,
+            answers=state.answers,
+            evaluations=state.evaluations,
+            topics_covered=state.topics_covered
+        )
+
+        state.final_report = report.model_dump()
+
+        return report

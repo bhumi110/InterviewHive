@@ -1,7 +1,10 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+import uuid
 
 from app.services.interview_engine import run_interview_turn
+from app.services.role_analyzer import analyze_role
+from app.models.interview import InterviewState
 
 
 router = APIRouter(
@@ -14,7 +17,7 @@ router = APIRouter(
 
 class StartInterviewRequest(BaseModel):
     candidate_profile: dict
-    blueprint: dict
+    target_role: str
 
 
 class AnswerRequest(BaseModel):
@@ -23,13 +26,6 @@ class AnswerRequest(BaseModel):
 
 
 # TEMPORARY SESSION STORAGE
-
-# IMPORTANT:
-# This is intentionally in-memory for now.
-#
-# You said you do NOT want persistent user login.
-# We will later replace this with a temporary interview-session
-# mechanism rather than user accounts.
 
 interview_sessions = {}
 
@@ -41,34 +37,44 @@ def start_interview(
     request: StartInterviewRequest
 ):
 
-    # Your InterviewState class should already exist.
-    # Import it from wherever you created it.
-    
-    from app.models.interview import InterviewState
-    
-    state = InterviewState(
-        target_role=request.blueprint["target_role"]
-    )
+    # 1. Analyze role
 
-    result = run_interview_turn(
-        state=state,
-        blueprint=request.blueprint,
+    blueprint = analyze_role(
+        target_role=request.target_role,
         candidate_profile=request.candidate_profile
     )
 
-    # Temporary session ID.
-    # We'll improve session handling later.
-    import uuid
+    # If analyze_role returns a Pydantic model
+    if hasattr(blueprint, "model_dump"):
+        blueprint_dict = blueprint.model_dump()
+    else:
+        blueprint_dict = blueprint
 
-    session_id = str(
-        uuid.uuid4()
+    # 2. Create interview state
+
+    state = InterviewState(
+        target_role=request.target_role
     )
+
+    # 3. Generate first interview question
+
+    result = run_interview_turn(
+        state=state,
+        blueprint=blueprint_dict,
+        candidate_profile=request.candidate_profile
+    )
+
+    # 4. Create temporary session
+
+    session_id = str(uuid.uuid4())
 
     interview_sessions[session_id] = {
         "state": state,
-        "blueprint": request.blueprint,
+        "blueprint": blueprint_dict,
         "candidate_profile": request.candidate_profile
     }
+
+    # 5. Return response
 
     return {
         "session_id": session_id,
@@ -78,36 +84,43 @@ def start_interview(
 
 # SUBMIT ANSWER
 
-@router.post("/start")
-def start_interview(
-    request: StartInterviewRequest
+@router.post("/answer")
+def submit_answer(
+    request: AnswerRequest
 ):
 
-    from app.models.interview import InterviewState
+    # 1. Find session
 
-    state = InterviewState(
-        target_role=request.blueprint["target_role"]
+    session = interview_sessions.get(
+        request.session_id
     )
+
+    if session is None:
+
+        raise HTTPException(
+            status_code=404,
+            detail="Interview session not found"
+        )
+
+    # 2. Retrieve interview data
+
+    state = session["state"]
+
+    blueprint = session["blueprint"]
+
+    candidate_profile = session[
+        "candidate_profile"
+    ]
+
+    # 3. Process candidate answer
 
     result = run_interview_turn(
         state=state,
-        blueprint=request.blueprint,
-        candidate_profile=request.candidate_profile
+        blueprint=blueprint,
+        candidate_profile=candidate_profile,
+        candidate_answer=request.answer
     )
 
-    import uuid
+    # 4. Return next turn
 
-    session_id = str(
-        uuid.uuid4()
-    )
-
-    interview_sessions[session_id] = {
-        "state": state,
-        "blueprint": request.blueprint,
-        "candidate_profile": request.candidate_profile
-    }
-
-    return {
-        "session_id": session_id,
-        **result
-    }
+    return result

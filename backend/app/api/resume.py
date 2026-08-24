@@ -1,4 +1,4 @@
-from fastapi import APIRouter, File, UploadFile, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException
 
 from app.services.resume_parser import parse_resume
 
@@ -14,27 +14,56 @@ async def parse_resume_endpoint(
     file: UploadFile = File(...)
 ):
 
-    if file.content_type != "application/pdf":
+    # --------------------------------------------------------
+    # Validate file
+    # --------------------------------------------------------
+
+    if not file.filename:
         raise HTTPException(
             status_code=400,
-            detail="Only PDF resumes are supported."
+            detail="No file provided"
         )
+
+    if not file.filename.lower().endswith(".pdf"):
+        raise HTTPException(
+            status_code=400,
+            detail="Only PDF resumes are supported"
+        )
+
+    # --------------------------------------------------------
+    # Read PDF
+    # --------------------------------------------------------
 
     file_bytes = await file.read()
 
+    if not file_bytes:
+        raise HTTPException(
+            status_code=400,
+            detail="Uploaded file is empty"
+        )
+
+    # --------------------------------------------------------
+    # Parse resume
+    # --------------------------------------------------------
+
     try:
+
         candidate_profile = parse_resume(
             file_bytes
         )
-
-        return {
-            "success": True,
-            "candidate": candidate_profile.model_dump()
-        }
 
     except Exception as e:
 
         raise HTTPException(
             status_code=500,
-            detail=f"Resume processing failed: {str(e)}"
+            detail=f"Resume parsing failed: {str(e)}"
         )
+
+    # --------------------------------------------------------
+    # Return candidate profile
+    # --------------------------------------------------------
+
+    return {
+        "filename": file.filename,
+        "candidate_profile": candidate_profile
+    }

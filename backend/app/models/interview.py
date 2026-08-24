@@ -67,6 +67,10 @@ class InterviewState(BaseModel):
         default_factory=list
     )
 
+    conversation_history: list[dict] = Field(
+        default_factory=list
+    )
+
     topics_covered: list[str] = Field(
         default_factory=list
     )
@@ -77,10 +81,6 @@ class InterviewState(BaseModel):
 
     current_question: Optional[dict] = None
 
-    conversation_history: list[dict] = Field(
-        default_factory=list
-    )
-
     time_remaining: int = 900
 
     max_questions: int = 12
@@ -90,3 +90,30 @@ class InterviewState(BaseModel):
     follow_up_count: int = 0
 
     question_count: int = 0
+    
+    
+class InterviewBlueprint(BaseModel):
+
+    target_role: str
+
+    priority_topics: list[str] = Field(
+        default_factory=list
+    )
+
+    technical_skills: list[str] = Field(
+        default_factory=list
+    )
+
+    project_topics: list[str] = Field(
+        default_factory=list
+    )
+
+    competencies: list[str] = Field(
+        default_factory=list
+    )
+
+    difficulty: str = "medium"
+
+    interview_focus: list[str] = Field(
+        default_factory=list
+    )
