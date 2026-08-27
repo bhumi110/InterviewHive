@@ -39,7 +39,14 @@ The interview should be tailored to BOTH:
 
 Do not invent skills or experience.
 
-Return ONLY valid JSON.
+IMPORTANT:
+- Return ONLY valid JSON.
+- Do not use markdown.
+- Do not use ```json.
+- Do not add explanations.
+- Keep every string concise.
+- Do not write long descriptions.
+- Make sure every string is properly closed.
 
 Expected format:
 
@@ -60,7 +67,8 @@ Expected format:
                 "role": "system",
                 "content": (
                     "You are an expert technical interviewer. "
-                    "Return only valid JSON."
+                    "Return ONLY valid JSON. "
+                    "Never return markdown or explanations."
                 )
             },
             {
@@ -69,11 +77,49 @@ Expected format:
             }
         ],
         model="openai/gpt-oss-120b",
-        temperature=0.2
+        temperature=0
     )
 
-    
+    print(
+        "\n========== ROLE ANALYZER RAW RESPONSE =========="
+    )
+    print(response_text)
+    print(
+        "=================================================\n"
+    )
 
-    result = json.loads(response_text)
+    # Remove accidental markdown fences
+    response_text = response_text.strip()
 
-    return result
+    if response_text.startswith("```"):
+        response_text = response_text.replace(
+            "```json", ""
+        )
+        response_text = response_text.replace(
+            "```", ""
+        )
+        response_text = response_text.strip()
+
+    try:
+
+        result = json.loads(
+            response_text
+        )
+
+    except json.JSONDecodeError as e:
+
+        print(
+            "ROLE ANALYZER JSON ERROR:",
+            e
+        )
+
+        raise ValueError(
+            "Role analyzer returned invalid JSON."
+        )
+
+    # Validate against Pydantic model
+    blueprint = InterviewBlueprint.model_validate(
+        result
+    )
+
+    return blueprint

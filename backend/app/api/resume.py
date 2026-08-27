@@ -14,56 +14,50 @@ async def parse_resume_endpoint(
     file: UploadFile = File(...)
 ):
 
-    # --------------------------------------------------------
-    # Validate file
-    # --------------------------------------------------------
-
     if not file.filename:
         raise HTTPException(
             status_code=400,
-            detail="No file provided"
+            detail="No file provided."
         )
 
     if not file.filename.lower().endswith(".pdf"):
         raise HTTPException(
             status_code=400,
-            detail="Only PDF resumes are supported"
+            detail="Only PDF files are supported."
         )
-
-    # --------------------------------------------------------
-    # Read PDF
-    # --------------------------------------------------------
-
-    file_bytes = await file.read()
-
-    if not file_bytes:
-        raise HTTPException(
-            status_code=400,
-            detail="Uploaded file is empty"
-        )
-
-    # --------------------------------------------------------
-    # Parse resume
-    # --------------------------------------------------------
 
     try:
+
+        file_bytes = await file.read()
+
+        if not file_bytes:
+            raise HTTPException(
+                status_code=400,
+                detail="Uploaded file is empty."
+            )
 
         candidate_profile = parse_resume(
             file_bytes
         )
 
+        return {
+            "filename": file.filename,
+            "candidate_profile": (
+                candidate_profile.model_dump()
+            )
+        }
+
+    except HTTPException:
+        raise
+
     except Exception as e:
+
+        print(
+            "RESUME PARSING ERROR:",
+            repr(e)
+        )
 
         raise HTTPException(
             status_code=500,
-            detail=f"Resume parsing failed: {str(e)}"
+            detail=str(e)
         )
-
-    # --------------------------------------------------------
-    # Return candidate profile
-    # --------------------------------------------------------
-
-    return {
-        "filename": file.filename,
-        "candidate_profile": candidate_profile
-    }
