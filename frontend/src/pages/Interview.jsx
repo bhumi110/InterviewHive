@@ -7,9 +7,21 @@ function Interview() {
     const location = useLocation();
     const navigate = useNavigate();
 
-    const sessionId = location.state?.sessionId;
-    const initialQuestion = location.state?.question;
-    const initialMessage = location.state?.interviewerMessage;
+    const storedInterview = JSON.parse(
+    sessionStorage.getItem("interview_session") || "null"
+);
+
+    const sessionId =
+        location.state?.sessionId ||
+        storedInterview?.sessionId;
+
+    const initialQuestion =
+        location.state?.question ||
+        storedInterview?.question;
+
+    const initialMessage =
+        location.state?.interviewerMessage ||
+        storedInterview?.interviewerMessage;
 
     const [question, setQuestion] = useState(
         initialQuestion || null
@@ -96,6 +108,16 @@ function Interview() {
                 result.interviewer_message || ""
             );
 
+            sessionStorage.setItem(
+                "interview_session",
+                JSON.stringify({
+                    ...JSON.parse(
+                        sessionStorage.getItem("interview_session") || "{}"
+                    ),
+                    question: result.question,
+                    interviewerMessage: result.interviewer_message
+                })
+            );
 
             // Clear answer box
             setAnswer("");

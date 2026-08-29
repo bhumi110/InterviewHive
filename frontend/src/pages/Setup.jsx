@@ -91,26 +91,34 @@ function Setup() {
              */
 
             sessionStorage.setItem(
-                "interview_session",
-                JSON.stringify({
-                    sessionId: data.session_id,
-                    candidateProfile,
-                    targetRole
-                })
-            );
+            "interview_session",
+            JSON.stringify({
+                sessionId: data.session_id,
+                candidateProfile,
+                targetRole,
+                question: data.question,
+                interviewerMessage: data.interviewer_message
+            })
+        );
 
-            navigate("/interview");
+        navigate("/interview", {
+            state: {
+                sessionId: data.session_id,
+                question: data.question,
+                interviewerMessage: data.interviewer_message
+            }
+        });
 
         } catch (err) {
 
     console.error(
-        "Resume upload failed:",
+        "Start interview failed:",
         err
     );
 
     const message =
         err.response?.data?.detail ||
-        "Could not analyse your resume.";
+        "Could not start the interview.";
 
     setError(message);
 
