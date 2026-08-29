@@ -2,103 +2,83 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { submitAnswer } from "../services/api";
 
-function Interview() {
+import PixelWindow from "../pixi/pixelWindow";
+import InterviewRoomScene from "../pixi/Interviewroomscene";
+import InterviewHeader from "../components/InterviewHeader";
+import InterviewQuestion from "../components/InterviewQuestion";
+import AnswerInput from "../components/AnswerInput";
+import AgentRoster from "../pixi/agentRoster";
 
+function Interview() {
     const location = useLocation();
     const navigate = useNavigate();
 
     const storedInterview = JSON.parse(
-    sessionStorage.getItem("interview_session") || "null"
-);
+        sessionStorage.getItem("interview_session") || "null"
+    );
 
-    const sessionId =
-        location.state?.sessionId ||
-        storedInterview?.sessionId;
+    const sessionId = location.state?.sessionId || storedInterview?.sessionId;
 
     const initialQuestion =
-        location.state?.question ||
-        storedInterview?.question;
+        location.state?.question || storedInterview?.question;
 
     const initialMessage =
-        location.state?.interviewerMessage ||
-        storedInterview?.interviewerMessage;
+        location.state?.interviewerMessage || storedInterview?.interviewerMessage;
 
-    const [question, setQuestion] = useState(
-        initialQuestion || null
-    );
+    const [question, setQuestion] = useState(initialQuestion || null);
 
     const [interviewerMessage, setInterviewerMessage] = useState(
         initialMessage || ""
     );
 
     const [answer, setAnswer] = useState("");
-
     const [loading, setLoading] = useState(false);
-
     const [error, setError] = useState("");
-
     const [questionNumber, setQuestionNumber] = useState(1);
-
 
     // If user opens /interview directly
     if (!sessionId || !question) {
-
         return (
-            <div>
-                <h1>
-                    No active interview
-                </h1>
-
-                <button
-                    onClick={() => navigate("/setup")}
-                >
-                    Go to Setup
-                </button>
+            <div className="app-shell">
+                <div className="app-shell__inner">
+                    <PixelWindow title="ERROR">
+                        <h1 style={{ fontSize: 16, marginBottom: 14 }}>
+                            No active interview
+                        </h1>
+                        <button
+                            className="btn-pixel"
+                            onClick={() => navigate("/setup")}
+                        >
+                            Go to setup →
+                        </button>
+                    </PixelWindow>
+                </div>
             </div>
         );
     }
 
-
     async function handleSubmit() {
-
-        if (!answer.trim()) {
-            return;
-        }
+        if (!answer.trim()) return;
 
         setLoading(true);
         setError("");
 
         try {
+            const result = await submitAnswer(sessionId, answer);
 
-            const result = await submitAnswer(
-                sessionId,
-                answer
-            );
-
-            console.log(
-                "INTERVIEW TURN:",
-                result
-            );
-
+            console.log("INTERVIEW TURN:", result);
 
             // Interview finished
             if (result.status === "completed") {
-
                 navigate("/report");
-
                 return;
             }
 
             // Update next question
-            setQuestion(
-                result.question
-            );
-
+            setQuestion(result.question);
 
             // Update interviewer dialogue
-            setInterviewerMessage(
-                result.interviewer_message || ""
-            );
+            setInterviewerMessage(result.interviewer_message || "");
 
             sessionStorage.setItem(
                 "interview_session",
@@ -107,171 +87,81 @@ function Interview() {
                         sessionStorage.getItem("interview_session") || "{}"
                     ),
                     question: result.question,
-                    interviewerMessage: result.interviewer_message
+                    interviewerMessage: result.interviewer_message,
                 })
             );
 
             // Clear answer box
             setAnswer("");
 
-
             // Increment question number
-            setQuestionNumber(
-                previous => previous + 1
-            );
-
+            setQuestionNumber((previous) => previous + 1);
         } catch (err) {
-
-            console.error(
-                "Answer submission error:",
-                err
-            );
-
-            setError(
-                "Something went wrong while processing your answer."
-            );
-
+            console.error("Answer submission error:", err);
+            setError("Something went wrong while processing your answer.");
         } finally {
-
             setLoading(false);
         }
     }
 
+    const phase = loading ? "thinking" : answer.trim() ? "listening" : "idle";
 
     return (
-
-        <div
-            style={{
-                minHeight: "100vh",
-                padding: "40px",
-                fontFamily: "Arial, sans-serif"
-            }}
-        >
-
-            {/* Header */}
-
-            <div
-                style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    marginBottom: "40px"
-                }}
-            >
-
-                <h1>
-                    InterviewHive
-                </h1>
-
-                <span>
-                    Question {questionNumber}
+        <div className="app-shell">
+            <div className="app-topbar">
+                <span className="app-topbar__brand">
+                    <span className="app-topbar__dot" />
+                    INTERVIEWHIVE
                 </span>
-
+                <span className="app-topbar__meta">live session</span>
             </div>
 
+            <div className="app-shell__inner">
+                <section className="pw">
+                    <InterviewHeader
+                        questionNumber={questionNumber}
+                        phase={phase}
+                    />
+                    <InterviewRoomScene phase={phase} height={150} />
+                </section>
 
-            {/* Interviewer */}
+                <PixelWindow
+                    title="AGENT_PANEL"
+                    meta={phase === "thinking" ? "deliberating…" : "4 agents"}
+                >
+                    <AgentRoster phase={phase} />
+                </PixelWindow>
 
-            <div
-                style={{
-                    marginBottom: "30px"
-                }}
-            >
+                {interviewerMessage && (
+                    <div className="terminal-block">
+                        <div className="terminal-line">
+                            <span className="prompt">interviewer&gt;</span>
+                            <span>{interviewerMessage}</span>
+                        </div>
+                    </div>
+                )}
 
-                <h2>
-                    AI Interviewer
-                </h2>
+                <PixelWindow title="QUESTION">
+                    <InterviewQuestion question={question} />
+                </PixelWindow>
 
-                {/* <p>
-                    {interviewerMessage ||
-                        "Let's begin the interview."}
-                </p> */}
+                <PixelWindow title="ANSWER">
+                    <AnswerInput
+                        value={answer}
+                        onChange={setAnswer}
+                        onSubmit={handleSubmit}
+                        loading={loading}
+                    />
 
+                    {error && (
+                        <p className="error-text" style={{ marginTop: 12 }}>
+                            {error}
+                        </p>
+                    )}
+                </PixelWindow>
             </div>
-
-
-            {/* Question */}
-
-            <div
-                style={{
-                    marginBottom: "30px"
-                }}
-            >
-
-                <h2>
-                    {question.question}
-                </h2>
-
-                <p>
-                    Topic: {question.topic}
-                </p>
-
-                <p>
-                    Difficulty: {question.difficulty}
-                </p>
-
-            </div>
-
-
-            {/* Answer */}
-
-            <div>
-
-                <textarea
-                    value={answer}
-                    onChange={(event) =>
-                        setAnswer(event.target.value)
-                    }
-                    placeholder="Type your answer here..."
-                    rows={8}
-                    disabled={loading}
-                    style={{
-                        width: "100%",
-                        maxWidth: "800px",
-                        padding: "15px",
-                        fontSize: "16px",
-                        resize: "vertical"
-                    }}
-                />
-
-            </div>
-
-
-            {/* Error */}
-
-            {error && (
-
-                <p>
-                    {error}
-                </p>
-
-            )}
-
-
-            {/* Submit */}
-
-            <button
-                onClick={handleSubmit}
-                disabled={
-                    loading ||
-                    !answer.trim()
-                }
-                style={{
-                    marginTop: "20px",
-                    padding: "12px 24px",
-                    cursor: "pointer"
-                }}
-            >
-
-                {loading
-                    ? "Evaluating..."
-                    : "Submit Answer"}
-
-            </button>
-
         </div>
     );
 }
-
 
 export default Interview;

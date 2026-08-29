@@ -1,14 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import {
-    parseResume,
-    startInterview
-} from "../services/api";
+import { parseResume, startInterview } from "../services/api";
 
+import PixelWindow from "../pixi/pixelWindow";
+import ResumeUpload from "../components/ResumeUpload";
+import RoleSelector from "../components/RoleSelector";
 
 function Setup() {
-
     const navigate = useNavigate();
 
     const [file, setFile] = useState(null);
@@ -18,9 +17,7 @@ function Setup() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
-
     async function handleResumeUpload(selectedFile) {
-
         if (!selectedFile) return;
 
         setFile(selectedFile);
@@ -28,50 +25,29 @@ function Setup() {
         setLoading(true);
 
         try {
-
             const data = await parseResume(selectedFile);
 
             console.log("FULL RESUME RESPONSE:", data);
 
-            setCandidateProfile(
-                data.candidate_profile || data
-            );
-
+            setCandidateProfile(data.candidate_profile || data);
         } catch (err) {
-
             console.error(err);
 
-            setError(
-                "Could not analyse your resume."
-            );
-
+            setError("Could not analyse your resume.");
             setCandidateProfile(null);
-
         } finally {
-
             setLoading(false);
-
         }
     }
 
-
     async function handleStartInterview() {
-
         if (!candidateProfile) {
-
-            setError(
-                "Please upload your resume first."
-            );
-
+            setError("Please upload your resume first.");
             return;
         }
 
         if (!targetRole.trim()) {
-
-            setError(
-                "Please enter your target role."
-            );
-
+            setError("Please enter your target role.");
             return;
         }
 
@@ -79,155 +55,103 @@ function Setup() {
         setLoading(true);
 
         try {
-
-            const data = await startInterview(
-                candidateProfile,
-                targetRole
-            );
+            const data = await startInterview(candidateProfile, targetRole);
             console.log("SESSION ID:", data.session_id);
 
             /*
              * Store session information temporarily.
              * No login or permanent user storage.
              */
-
             sessionStorage.setItem(
-            "interview_session",
-            JSON.stringify({
-                sessionId: data.session_id,
-                candidateProfile,
-                targetRole,
-                question: data.question,
-                interviewerMessage: data.interviewer_message
-            })
-        );
+                "interview_session",
+                JSON.stringify({
+                    sessionId: data.session_id,
+                    candidateProfile,
+                    targetRole,
+                    question: data.question,
+                    interviewerMessage: data.interviewer_message,
+                })
+            );
 
-        navigate("/interview", {
-            state: {
-                sessionId: data.session_id,
-                question: data.question,
-                interviewerMessage: data.interviewer_message
-            }
-        });
-
+            navigate("/interview", {
+                state: {
+                    sessionId: data.session_id,
+                    question: data.question,
+                    interviewerMessage: data.interviewer_message,
+                },
+            });
         } catch (err) {
+            console.error("Start interview failed:", err);
 
-    console.error(
-        "Start interview failed:",
-        err
-    );
+            const message =
+                err.response?.data?.detail || "Could not start the interview.";
 
-    const message =
-        err.response?.data?.detail ||
-        "Could not start the interview.";
-
-    setError(message);
-
-    setCandidateProfile(null);
-}
+            setError(message);
+            setCandidateProfile(null);
+        } finally {
+            setLoading(false);
+        }
     }
 
+    const ready = Boolean(candidateProfile) && targetRole.trim().length > 0;
 
     return (
+        <div className="app-shell">
+            <div className="app-topbar">
+                <span className="app-topbar__brand">
+                    <span className="app-topbar__dot" />
+                    INTERVIEWHIVE
+                </span>
+                <span className="app-topbar__meta">setup · step 1 of 1</span>
+            </div>
 
-        <main>
-
-            <h1>
-                Set up your interview
-            </h1>
-
-            <p>
-                Upload your resume and choose
-                the role you're preparing for.
-            </p>
-
-
-            {/* Resume */}
-
-            <section>
-
-                <h2>
-                    Your resume
-                </h2>
-
-                <input
-                    type="file"
-                    accept=".pdf"
-                    onChange={(event) =>
-                        handleResumeUpload(
-                            event.target.files[0]
-                        )
-                    }
-                />
-
-                {file && (
-                    <p>
-                        {file.name}
+            <div className="app-shell__inner">
+                <PixelWindow title="SETUP.exe" meta="configure session">
+                    <div className="eyebrow">brief</div>
+                    <h1 style={{ fontSize: 18, marginBottom: 6 }}>
+                        Set up your interview
+                    </h1>
+                    <p
+                        style={{
+                            fontFamily: "var(--font-mono)",
+                            fontSize: 13,
+                            color: "var(--ink-dim)",
+                            margin: 0,
+                        }}
+                    >
+                        Upload your resume and choose the role you're preparing for.
                     </p>
-                )}
+                </PixelWindow>
 
-                {loading && (
-                    <p>
-                        Analysing...
-                    </p>
-                )}
+                <PixelWindow title="RESUME_UPLOAD" meta={file ? "1 file" : "0 files"}>
+                    <ResumeUpload
+                        file={file}
+                        loading={loading && !candidateProfile}
+                        candidateProfile={candidateProfile}
+                        onSelect={handleResumeUpload}
+                    />
+                </PixelWindow>
 
-                {candidateProfile && !loading && (
-                    <p>
-                        ✓ Resume analysed
-                    </p>
-                )}
+                <PixelWindow title="TARGET_ROLE">
+                    <RoleSelector value={targetRole} onChange={setTargetRole} />
+                </PixelWindow>
 
-            </section>
+                {error && <p className="error-text">{error}</p>}
 
-
-            {/* Target role */}
-
-            <section>
-
-                <h2>
-                    Target role
-                </h2>
-
-                <input
-                    type="text"
-                    placeholder="e.g. Data Scientist"
-                    value={targetRole}
-                    onChange={(event) =>
-                        setTargetRole(
-                            event.target.value
-                        )
-                    }
-                />
-
-            </section>
-
-
-            {/* Error */}
-
-            {error && (
-                <p>
-                    {error}
-                </p>
-            )}
-
-
-            {/* Start */}
-
-            <button
-                onClick={handleStartInterview}
-                disabled={loading}
-            >
-                {loading
-                    ? "Preparing interview..."
-                    : "Start Interview"
-                }
-            </button>
-
-        </main>
-
+                <button
+                    className="btn-pixel btn-pixel--full"
+                    onClick={handleStartInterview}
+                    disabled={loading}
+                >
+                    {loading
+                        ? "Preparing interview…"
+                        : ready
+                        ? "Start interview →"
+                        : "Start interview"}
+                </button>
+            </div>
+        </div>
     );
 }
-
 
 export default Setup;

@@ -1,5 +1,8 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
+import "./index.css";
+import "./pixi/pixi.css";
+
 import Home from "./pages/Home";
 import Setup from "./pages/Setup";
 import Interview from "./pages/Interview";
