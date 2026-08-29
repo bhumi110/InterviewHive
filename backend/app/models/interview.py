@@ -90,6 +90,9 @@ class InterviewState(BaseModel):
     follow_up_count: int = 0
 
     question_count: int = 0
+
+    # FINAL REPORT
+    final_report: Optional[dict] = None
     
     
 class InterviewBlueprint(BaseModel):

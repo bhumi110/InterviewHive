@@ -15,27 +15,26 @@ def get_interview_report(
     session_id: str
 ):
 
-    session = interview_sessions.get(
-        session_id
-    )
+    # Find interview session
+    session = interview_sessions.get(session_id)
 
     if session is None:
-
         raise HTTPException(
             status_code=404,
             detail="Interview session not found"
         )
 
+    # Get interview state
     state = session["state"]
 
+    # Report only available after interview completion
     if state.interview_status != "completed":
-
         raise HTTPException(
             status_code=400,
             detail="Interview has not been completed yet"
         )
 
-    # Return existing report if already generated
+    # Return cached report
     if state.final_report is not None:
 
         return {
@@ -43,17 +42,17 @@ def get_interview_report(
             "report": state.final_report
         }
 
+    # Generate final report
     report = generate_final_report(
         state=state,
-        candidate_profile=session[
-            "candidate_profile"
-        ],
-        target_role=session[
-            "blueprint"
-        ]["target_role"]
+        candidate_profile=session["candidate_profile"],
+        target_role=session["blueprint"]["target_role"]
     )
+
+    # Cache report
+    state.final_report = report.model_dump()
 
     return {
         "status": "completed",
-        "report": report.model_dump()
+        "report": state.final_report
     }

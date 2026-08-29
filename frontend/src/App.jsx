@@ -29,7 +29,7 @@ function App() {
                 />
 
                 <Route
-                    path="/report/:sessionId"
+                    path="/report"
                     element={<Report />}
                 />
 

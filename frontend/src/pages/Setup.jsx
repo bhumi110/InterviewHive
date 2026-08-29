@@ -84,6 +84,7 @@ function Setup() {
                 candidateProfile,
                 targetRole
             );
+            console.log("SESSION ID:", data.session_id);
 
             /*
              * Store session information temporarily.

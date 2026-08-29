@@ -93,25 +93,12 @@ export async function submitAnswer(
 
 // FINAL REPORT
 
-export async function getReport(
-    sessionId
-) {
+export async function getReport(sessionId) {
 
-    try {
+    const response = await api.get(
+        `/report/${sessionId}`
+    );
 
-        const response = await API.get(
-            `/report/${sessionId}`
-        );
-
-        return response.data;
-
-    } catch (error) {
-
-        console.error(
-            "Report error:",
-            error.response?.data || error
-        );
-
-        throw error;
-    }
+    return response.data;
 }
+

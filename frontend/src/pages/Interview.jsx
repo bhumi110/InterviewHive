@@ -84,18 +84,10 @@ function Interview() {
             // Interview finished
             if (result.status === "completed") {
 
-                navigate(
-                    "/report",
-                    {
-                        state: {
-                            sessionId: sessionId
-                        }
-                    }
-                );
+                navigate("/report");
 
                 return;
             }
-
 
             // Update next question
             setQuestion(
@@ -190,10 +182,10 @@ function Interview() {
                     AI Interviewer
                 </h2>
 
-                <p>
+                {/* <p>
                     {interviewerMessage ||
                         "Let's begin the interview."}
-                </p>
+                </p> */}
 
             </div>
 
