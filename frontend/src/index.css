@@ -82,3 +82,16 @@ a { color: inherit; }
 ::-webkit-scrollbar { width: 12px; height: 12px; }
 ::-webkit-scrollbar-track { background: var(--cream-2); }
 ::-webkit-scrollbar-thumb { background: var(--olive); border: 2px solid var(--ink); }
+
+.app-topbar__brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.app-topbar__logo {
+    /* width: 30px; */
+    height: 65px;
+    object-fit: contain;
+    image-rendering: pixelated;
+}

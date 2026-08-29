@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import PixelWindow from "../pixi/pixelWindow";
 import InterviewRoomScene from "../pixi/Interviewroomscene";
 // import AgentRoster from "../pixi/agentRoster";
+import logo from "../assets/logo.png";
 
 function Home() {
     const navigate = useNavigate();
@@ -11,8 +12,12 @@ function Home() {
         <div className="app-shell">
             <div className="app-topbar">
                 <span className="app-topbar__brand">
-                    <span className="app-topbar__dot" />
-                    INTERVIEWHIVE
+                    <img
+                        src={logo}
+                        alt="InterviewHive"
+                        className="app-topbar__logo"
+                    />
+                    <span>INTERVIEWHIVE</span>
                 </span>
                 <span className="app-topbar__meta">v0.1.0 · practice mode</span>
             </div>
