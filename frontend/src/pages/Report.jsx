@@ -140,6 +140,7 @@ function Report() {
                 <PixelWindow title="SESSION_REPORT" meta="complete" tight>
                     <InterviewRoomScene phase="done" height={150} />
                 </PixelWindow>
+                
 
                 <PixelWindow title="AGENT_PANEL" meta="4 agents · signed off">
                     <AgentRoster phase="done" />
