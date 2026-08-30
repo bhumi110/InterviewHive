@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 
 import PixelWindow from "../pixi/pixelWindow";
 import InterviewRoomScene from "../pixi/Interviewroomscene";
-// import AgentRoster from "../pixi/agentRoster";
+import AgentRoster from "../pixi/agentRoster";
 import logo from "../assets/logo.png";
 
 function Home() {
@@ -23,8 +23,13 @@ function Home() {
             </div>
 
             <div className="app-shell__inner">
-                <PixelWindow title="AI_INTERVIEW_ROOM" meta="idle" tight>
+                {/* <PixelWindow title="AI_INTERVIEW_ROOM" meta="idle" tight>
                     <InterviewRoomScene phase="idle" height={160} />
+                </PixelWindow> */}
+
+                <PixelWindow title="AI_INTERVIEW_ROOM" meta="4 agents">
+                    <div className="eyebrow">meet your panel</div>
+                    <AgentRoster phase="idle" />
                 </PixelWindow>
 
                 <PixelWindow title="README.txt">
@@ -58,10 +63,7 @@ function Home() {
                     </button>
                 </PixelWindow>
 
-                {/* <PixelWindow title="AGENT_PANEL" meta="4 agents">
-                    <div className="eyebrow">meet your panel</div>
-                    <AgentRoster phase="idle" />
-                </PixelWindow> */}
+                
             </div>
         </div>
     );

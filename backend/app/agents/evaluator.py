@@ -13,15 +13,18 @@ EVALUATOR_PROMPT = load_prompt(
 
 def extract_json(text: str):
     """
-    Extract the first JSON object from an LLM response.
-    Handles markdown fences such as ```json ... ```.
+    Extract and parse the first JSON object from an LLM response.
+    Handles markdown fences and extra text around JSON.
     """
+
+    if not text or not text.strip():
+        raise ValueError("LLM returned an empty response.")
 
     text = text.strip()
 
-    # Remove markdown code fences
+    # Remove markdown code fences if present
     text = re.sub(
-        r"^```json\s*",
+        r"^```(?:json)?\s*",
         "",
         text,
         flags=re.IGNORECASE
@@ -31,29 +34,33 @@ def extract_json(text: str):
         r"\s*```$",
         "",
         text
-    )
+    ).strip()
 
-    text = text.strip()
-
-    # Try normal JSON first
+    # First try parsing the complete response
     try:
         return json.loads(text)
     except json.JSONDecodeError:
         pass
 
-    # Try extracting the outermost JSON object
+    # Find JSON object inside additional text
     start = text.find("{")
     end = text.rfind("}")
 
     if start == -1 or end == -1 or end <= start:
         raise ValueError(
-            f"LLM did not return a JSON object.\n"
+            "LLM did not return a JSON object.\n"
             f"Response:\n{text}"
         )
 
     json_text = text[start:end + 1]
 
-    return json.loads(json_text)
+    try:
+        return json.loads(json_text)
+    except json.JSONDecodeError as e:
+        raise ValueError(
+            f"LLM returned invalid JSON: {e}\n"
+            f"Response:\n{json_text}"
+        ) from e
 
 
 def evaluate_answer(
@@ -163,6 +170,11 @@ Expected structure:
         model="openai/gpt-oss-120b",
         temperature=0
     )
+
+    if not response_text or not response_text.strip():
+        raise RuntimeError(
+            "Evaluator LLM returned an empty response."
+        )
 
     print("\n===== EVALUATOR RAW RESPONSE =====")
     print(response_text)

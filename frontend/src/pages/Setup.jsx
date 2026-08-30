@@ -6,6 +6,8 @@ import { parseResume, startInterview } from "../services/api";
 import PixelWindow from "../pixi/pixelWindow";
 import ResumeUpload from "../components/ResumeUpload";
 import RoleSelector from "../components/RoleSelector";
+import logo from "../assets/logo.png";
+
 
 function Setup() {
     const navigate = useNavigate();
@@ -99,9 +101,13 @@ function Setup() {
         <div className="app-shell">
             <div className="app-topbar">
                 <span className="app-topbar__brand">
-                    <span className="app-topbar__dot" />
-                    INTERVIEWHIVE
-                </span>
+                                    <img
+                                        src={logo}
+                                        alt="InterviewHive"
+                                        className="app-topbar__logo"
+                                    />
+                                    <span>INTERVIEWHIVE</span>
+                                </span>
                 <span className="app-topbar__meta">setup · step 1 of 1</span>
             </div>
 

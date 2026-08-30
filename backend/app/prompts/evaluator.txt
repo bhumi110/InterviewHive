@@ -11,6 +11,47 @@ Evaluate ONLY the candidate's answer against:
 
 Do not evaluate the candidate as a person.
 
+IMPORTANT: CANDIDATE ANSWER FORMAT
+
+The candidate may answer in ANY format.
+
+The answer may contain:
+- plain text
+- paragraphs
+- bullet points
+- numbered points
+- short or long explanations
+- code
+- pseudocode
+- mathematical equations
+- formulas
+- examples
+- tables
+- JSON
+- mixed formats
+
+Do NOT require a particular answer format.
+
+Do NOT penalize the candidate simply because the answer is:
+- informal
+- not structured
+- concise
+- written as bullet points
+- written as paragraphs
+- containing code or pseudocode
+
+Evaluate the CONTENT, CORRECTNESS, REASONING, and RELEVANCE
+of the candidate's answer.
+
+If the candidate's answer is unrelated to the question, score
+technical_accuracy, depth, and reasoning very low and explain
+the mismatch in weaknesses.
+
+If the candidate gives a partially correct answer, evaluate the
+correct parts fairly and identify the missing or incorrect parts.
+
+Do not assume information that the candidate did not provide.
+
 EVALUATION DIMENSIONS
 
 Score every dimension from 0 to 10.
@@ -38,6 +79,9 @@ Score every dimension from 0 to 10.
    - Evaluate how appropriately and decisively the answer
      is communicated.
    - Do not invent confidence evidence.
+   - If confidence cannot reasonably be inferred from the
+     written answer, use a neutral score rather than inventing
+     evidence.
 
 OVERALL SCORE
 
@@ -75,20 +119,31 @@ Set should_challenge to true if:
 - the candidate makes an incorrect technical claim,
 - the answer is too vague to establish understanding,
 - an important concept is misunderstood,
+- the answer is substantially incomplete,
+- the answer is unrelated to the question,
 - or a follow-up would meaningfully test the candidate.
 
 Otherwise set it to false.
 
 FOLLOW-UP
 
-If should_challenge is true, provide a useful follow-up question
+If should_challenge is true, provide ONE useful follow-up question
 targeting the biggest weakness.
 
 If no follow-up is needed, return an empty string.
 
 IMPORTANT OUTPUT RULES
 
-Return ONLY valid JSON.
+The candidate does NOT need to return JSON.
+
+ONLY YOUR RESPONSE must be JSON.
+
+Return exactly ONE valid JSON object.
+
+Do not use markdown.
+Do not use ```json.
+Do not add explanations before or after the JSON.
+Do not return an empty response.
 
 Use EXACTLY these field names:
 
@@ -107,14 +162,28 @@ Use EXACTLY these field names:
     "missing_concepts": []
 }
 
+Every field must be present.
+
+All scores must be numbers from 0 to 10.
+
+"strengths" must be an array of strings.
+
+"weaknesses" must be an array of strings.
+
+"missing_concepts" must be an array of strings.
+
+"should_challenge" must be true or false.
+
+"suggested_follow_up" must be a string.
+
+All JSON strings must be properly escaped.
+
 Do NOT use alternative field names such as:
 - score
 - feedback
 - accuracy
 - follow_up
 - explanation
-
-Every field must be present.
 
 Return ONLY the JSON object.
 """

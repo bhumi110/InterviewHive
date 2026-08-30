@@ -8,6 +8,8 @@ import InterviewHeader from "../components/InterviewHeader";
 import InterviewQuestion from "../components/InterviewQuestion";
 import AnswerInput from "../components/AnswerInput";
 import AgentRoster from "../pixi/agentRoster";
+import logo from "../assets/logo.png";
+
 
 function Interview() {
     const location = useLocation();
@@ -110,9 +112,13 @@ function Interview() {
         <div className="app-shell">
             <div className="app-topbar">
                 <span className="app-topbar__brand">
-                    <span className="app-topbar__dot" />
-                    INTERVIEWHIVE
-                </span>
+                                    <img
+                                        src={logo}
+                                        alt="InterviewHive"
+                                        className="app-topbar__logo"
+                                    />
+                                    <span>INTERVIEWHIVE</span>
+                                </span>
                 <span className="app-topbar__meta">live session</span>
             </div>
 

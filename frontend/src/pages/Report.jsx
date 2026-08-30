@@ -6,6 +6,8 @@ import { getReport } from "../services/api";
 import PixelWindow from "../pixi/pixelWindow";
 import InterviewRoomScene from "../pixi/Interviewroomscene";
 import AgentRoster from "../pixi/agentRoster";
+import logo from "../assets/logo.png";
+
 
 function ScoreBar({ label, value }) {
     const segments = 10;
@@ -124,9 +126,13 @@ function Report() {
         <div className="app-shell">
             <div className="app-topbar">
                 <span className="app-topbar__brand">
-                    <span className="app-topbar__dot" />
-                    INTERVIEWHIVE
-                </span>
+                                    <img
+                                        src={logo}
+                                        alt="InterviewHive"
+                                        className="app-topbar__logo"
+                                    />
+                                    <span>INTERVIEWHIVE</span>
+                                </span>
                 <span className="app-topbar__meta">session report</span>
             </div>
 
