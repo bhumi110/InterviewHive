@@ -1,6 +1,6 @@
 # 🐝 InterviewHive
 <p align="center">
-  <img src="screenshots/panel.png" width="900" alt="InterviewHive agent panel">
+  <img src="screenshots/interviewHive.png" width="200" alt="InterviewHive agent panel">
 </p>
 
 
@@ -20,6 +20,7 @@
 ### 🚀 [Try InterviewHive](https://interview-hive-kappa.vercel.app/)
 
 </div>
+
 
 ## 🧠 Overview
 
@@ -122,6 +123,9 @@ Skeptic Agent
 This creates a more realistic interview loop.
 
 ## Agent Architecture
+<p align="center">
+  <img src="screenshots/panel.png" width="900" alt="InterviewHive agent panel">
+</p>
 
 ## 1. 🧑‍💼 Manager Agent
 
