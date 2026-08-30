@@ -6,12 +6,18 @@ from app.models.interview import GeneratedQuestion
 
 from sentence_transformers import SentenceTransformer
 
+_model = None
 
-# QUESTION SIMILARITY MODEL
 
-model = SentenceTransformer(
-    "all-MiniLM-L6-v2"
-)
+def get_similarity_model():
+    global _model
+
+    if _model is None:
+        _model = SentenceTransformer(
+            "all-MiniLM-L6-v2"
+        )
+
+    return _model
 
 
 # INTERVIEW CONTROL
@@ -241,6 +247,8 @@ def check_question_history(
             "similarity": 0.0,
             "matched_question": None
         }
+
+    model = get_similarity_model()
 
     new_embedding = model.encode(
         [new_question],
