@@ -7,10 +7,27 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
+# Node
+node_modules/
+dist/
+dist-ssr/
 *.local
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Python tooling
+.pytest_cache/
+.mypy_cache/
 
 # Editor directories and files
 .vscode/*
